@@ -1,0 +1,77 @@
+{
+  "project_info": {
+    "project_number": "154559820312",
+    "firebase_url": "https://uberclone-d45d3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "uberclone-d45d3",
+    "storage_bucket": "uberclone-d45d3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154559820312:android:3e479dd19fbabed47cc96d",
+        "android_client_info": {
+          "package_name": "com.uber"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154559820312-tfjj7nhe5kunhdpinlam82r5vqk1mh44.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgIhCK8dBiJY94YRI7oplka5L-j1C33jQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154559820312-tfjj7nhe5kunhdpinlam82r5vqk1mh44.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154559820312:android:436b2537298272907cc96d",
+        "android_client_info": {
+          "package_name": "com.uberdriverapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154559820312-dabrln58opo9fdi3323kn6m8h4m5iq8k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.uberdriverapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "154559820312-tfjj7nhe5kunhdpinlam82r5vqk1mh44.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgIhCK8dBiJY94YRI7oplka5L-j1C33jQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154559820312-tfjj7nhe5kunhdpinlam82r5vqk1mh44.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

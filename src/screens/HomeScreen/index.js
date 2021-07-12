@@ -13,13 +13,15 @@ import MapViewDirections from 'react-native-maps-directions';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import NewOrderPopup from '../../components/NewOrderPopup';
-
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 const origin = {latitude: 26.463587, longitude: 80.322149}; // for testing puttedto Kanpur coords
 const destination = {latitude: 25.138672, longitude: 75.844508};
 const GOOGLE_MAPS_APIKEY = 'AIzaSyAT081Nu8sH4jiCy3A6tICeER1K6rfWjMI';
 import Geolocation from 'react-native-geolocation-service';
 
 const HomeScreen = () => {
+  const [car, setCar] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
   const [myPosition, setMyPosition] = useState(null);
 
@@ -43,10 +45,29 @@ const HomeScreen = () => {
     longitude: 0,
   });
 
+  const fetchCar = async () => {
+    try {
+      const user = auth().currentUser;
+      const uid = user.uid;
+      const carData = await firestore()
+        .collection('car')
+        .where('id', '==', uid)
+        .get();
+      console.log(carData.docs[0].data());
+      setCar(carData.docs[0].data());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchCar();
+  }, []);
+
   useEffect(() => {
     Geolocation.getCurrentPosition(
       position => {
-        console.log(position);
+        //  console.log(position);
         setCurrentLoc({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
