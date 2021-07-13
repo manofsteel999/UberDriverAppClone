@@ -25,7 +25,7 @@ const AuthenticationScreen = () => {
         .get();
       //  console.log(carData);
       if (!carData.empty) {
-        console.log('Driver already has a car assigned');
+        console.log('User already exists by this id');
         navigation.navigate('Home');
         return;
       }

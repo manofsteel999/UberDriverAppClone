@@ -21,6 +21,7 @@ const GOOGLE_MAPS_APIKEY = 'AIzaSyAT081Nu8sH4jiCy3A6tICeER1K6rfWjMI';
 import Geolocation from 'react-native-geolocation-service';
 
 const HomeScreen = () => {
+  const [initializing, setInitializing] = useState(true);
   const [car, setCar] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
   const [myPosition, setMyPosition] = useState(null);
@@ -54,7 +55,10 @@ const HomeScreen = () => {
         .where('id', '==', uid)
         .get();
       console.log(carData.docs[0].data());
-      setCar(carData.docs[0].data());
+      setCar(carData.docs[0]); // append .data() for extracting the data field
+      if (initializing) {
+        setInitializing(false);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -90,8 +94,25 @@ const HomeScreen = () => {
     setNewOrder(null);
   };
 
-  const onGoPress = () => {
+  const onGoPress = async () => {
     setIsOnline(!isOnline);
+    // update the related car here and set the isActive field to true or false
+    try {
+      const user = auth().currentUser;
+      const uid = user.uid;
+      const ranVal = car.data().isActive;
+      await firestore().collection('car').doc(car.id).update({
+        isActive: !ranVal,
+      });
+      const carData = await firestore()
+        .collection('car')
+        .where('id', '==', uid)
+        .get();
+      console.log(carData.docs[0]);
+      setCar(carData.docs[0]);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const renderBottomTitle = () => {
@@ -141,7 +162,7 @@ const HomeScreen = () => {
       );
     }
 
-    if (isOnline) {
+    if (car.data().isActive) {
       return <Text style={styles.bottomText}>You're Online</Text>;
     }
     return <Text style={styles.bottomText}>You're Offline</Text>;
@@ -176,6 +197,8 @@ const HomeScreen = () => {
       longitude: order.originLongitude,
     };
   };
+
+  if (initializing) return null;
 
   return (
     <View>
@@ -242,7 +265,7 @@ const HomeScreen = () => {
       </Pressable>
 
       <Pressable onPress={onGoPress} style={styles.goButton}>
-        <Text style={styles.goText}>{isOnline ? 'END' : 'GO'}</Text>
+        <Text style={styles.goText}>{car.data().isActive ? 'END' : 'GO'}</Text>
       </Pressable>
 
       <View style={styles.bottomContainer}>
