@@ -8,7 +8,7 @@ import {
   PermissionsAndroid,
   Image,
 } from 'react-native';
-import MapView, {PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,32 +19,38 @@ const origin = {latitude: 26.463587, longitude: 80.322149}; // for testing putte
 const destination = {latitude: 25.138672, longitude: 75.844508};
 const GOOGLE_MAPS_APIKEY = 'AIzaSyAT081Nu8sH4jiCy3A6tICeER1K6rfWjMI';
 import Geolocation from 'react-native-geolocation-service';
+// var CURRENT_DRIVER_DOC_ID = '';
 
 const HomeScreen = () => {
   const [initializing, setInitializing] = useState(true);
   const [car, setCar] = useState(null);
-  const [isOnline, setIsOnline] = useState(false);
-  const [myPosition, setMyPosition] = useState(null);
 
   const [order, setOrder] = useState(null);
 
-  const [newOrder, setNewOrder] = useState({
-    id: '1', // document id in our database of a partivular order
-    type: 'UberX',
-    originLatitude: 26.463586,
-    originLongitude: 80.322148,
-    destLatitude: 25.138663,
-    destLongitude: 75.844532,
-    user: {
-      rating: 5.0,
-      name: 'Avinesh',
-    },
-  });
+  const [newOrders, setNewOrders] = useState([]);
 
   const [currentLoc, setCurrentLoc] = useState({
     latitude: 0,
     longitude: 0,
   });
+
+  const fetchOrders = async () => {
+    try {
+      const orderData = await firestore()
+        .collection('mYbHKTFnMtTewz0LRR6iEXeHkNY2')
+        .where('status', '==', 'NEW')
+        .get();
+      //  console.log(orderData.docs);
+      let rArray = [];
+      orderData.forEach(doc => {
+        rArray.push(doc.data());
+      });
+      console.log(rArray);
+      setNewOrders(rArray);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const fetchCar = async () => {
     try {
@@ -64,14 +70,70 @@ const HomeScreen = () => {
     }
   };
 
+  const updateLocInDatabase = async (position, x) => {
+    try {
+      // console.log('Doc is ', CURRENT_DRIVER_DOC_ID);
+      await firestore().collection('car').doc(x).update({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        heading: position.coords.heading,
+      });
+      console.log('succesfuly updated changed loc.');
+    } catch (e) {
+      console.log('error in updating loc in database', e);
+    }
+  };
+  const getDriverDoc = async () => {
+    const user = auth().currentUser;
+    const uid = user.uid;
+    let docID = '';
+    await firestore()
+      .collection('car')
+      .where('id', '==', uid)
+      .get()
+      .then(querySnapshot => {
+        docID = querySnapshot.docs[0].id;
+        // console.log(docID);
+      });
+    // console.log(docID);
+    return await docID;
+  };
+
   useEffect(() => {
     fetchCar();
+    fetchOrders();
+    const docId = getDriverDoc();
+    docId.then(x => {
+      Geolocation.watchPosition(
+        position => {
+          console.log('watch pos. geoloc', position);
+          updateLocInDatabase(position, x);
+          setCurrentLoc({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        error => console.log('error in watchPos in geoloc', error),
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 1000,
+          distanceFilter: 10,
+          interval: 10000,
+        },
+      );
+    });
+
+    // console.log('doc id is ', docId.W());
+    // watching the drivers location here
+
+    // return Geolocation.clearWatch(id);
   }, []);
 
   useEffect(() => {
     Geolocation.getCurrentPosition(
       position => {
-        //  console.log(position);
+        console.log(position);
         setCurrentLoc({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -81,21 +143,39 @@ const HomeScreen = () => {
         // See error code charts below.
         console.log(error.code, error.message);
       },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      {enableHighAccuracy: true, timeout: 200000, maximumAge: 1000},
     );
+    /*
+    var id = Geolocation.watchPosition(success, error, options);
+
+    var options = {
+      enableHighAccuracy: true,
+      distanceFilter: 0.001,
+    };
+
+    function error(err) {
+      console.warn('ERROR(' + err.code + '): ' + err.message);
+    }
+
+    function success(pos) {
+      var crd = pos.coords;
+      console.log(crd);
+    }
+ */
+    //  return Geolocation.clearWatch(id);
   }, [order]);
 
   const onDecline = () => {
-    setNewOrder(null);
+    setNewOrders(newOrders.slice(1));
   };
 
   const onAccept = newOrder => {
     setOrder(newOrder);
-    setNewOrder(null);
+    setNewOrders(newOrders.slice(1));
   };
 
   const onGoPress = async () => {
-    setIsOnline(!isOnline);
+    // setIsOnline(!isOnline);
     // update the related car here and set the isActive field to true or false
     try {
       const user = auth().currentUser;
@@ -168,9 +248,11 @@ const HomeScreen = () => {
     return <Text style={styles.bottomText}>You're Offline</Text>;
   };
 
-  const onUserLocationChange = event => {
+  /*
+  const onUserLocationChange = async event => {
     setMyPosition(event.nativeEvent.coordinate);
   };
+*/
 
   // VVVIp Function to find if uber has reached the user and then updating the destination coords
   const onDirectionFound = event => {
@@ -210,14 +292,23 @@ const HomeScreen = () => {
         }}
         style={{width: '100%', height: Dimensions.get('window').height - 45}}
         provider={PROVIDER_GOOGLE}
-        showUserLocation={true}
-        onUserLocationChange={onUserLocationChange}
+        //  showUserLocation={true}
+        // onUserLocationChange={onUserLocationChange}
+
         region={{
           latitude: currentLoc.latitude,
           longitude: currentLoc.longitude,
           latitudeDelta: 0.0222,
           longitudeDelta: 0.0121,
         }}>
+        <Marker
+          coordinate={{
+            latitude: currentLoc.latitude,
+            longitude: currentLoc.longitude,
+            latitudeDelta: 0.0222,
+            longitudeDelta: 0.0121,
+          }}
+        />
         {order && (
           <MapViewDirections
             origin={currentLoc} // write origin to test if the user has been picked up or not functionality
@@ -275,11 +366,11 @@ const HomeScreen = () => {
         <Entypo name={'menu'} size={30} color="#4a4a4a" />
       </View>
 
-      {newOrder ? (
+      {newOrders.length > 0 && !order ? (
         <NewOrderPopup
-          newOrder={newOrder}
+          newOrder={newOrders[0]}
           onDecline={onDecline}
-          onAccept={() => onAccept(newOrder)}
+          onAccept={() => onAccept(newOrders[0])}
           duration={4}
           distance={0.5}
         />
